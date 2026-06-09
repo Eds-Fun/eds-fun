@@ -18,7 +18,7 @@ body { background: var(--bg-dark); color: var(--text-white); display: flex; just
 .input-section { flex: 0.8; background: #131c2e; padding: 20px; border-radius: 16px; border: 1px solid var(--border); min-width: 300px; display: flex; flex-direction: column; }
 
 .mode-selector { display: flex; gap: 10px; margin-bottom: 25px; }
-.mode-selector button { padding: 8px 16px; background: transparent; border: 2px solid var(--border); color: var(--text-muted); border-radius: 8px; cursor: pointer; font-weight: 600; }
+.mode-selector button { padding: 8px 16px; background: transparent; border: 2px solid var(--border); color: var(--text-muted); border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; }
 .mode-selector button.active { background: var(--primary); border-color: var(--primary); color: white; }
 
 .wheel-box { position: relative; margin-bottom: 25px; }
@@ -35,7 +35,6 @@ body { background: var(--bg-dark); color: var(--text-white); display: flex; just
     box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); 
 }
 
-/* FIX: Mengatur poros teks akurat di tengah juring */
 .wheel-text { 
     position: absolute; 
     width: 100%; 
@@ -45,11 +44,10 @@ body { background: var(--bg-dark); color: var(--text-white); display: flex; just
     transform-origin: center center;
 }
 
-/* FIX: Memastikan text di dalam juring selalu terbaca tegak (tidak terbalik 180 derajat) */
 .wheel-text span {
     position: absolute;
     left: 50%;
-    top: 35px; /* Jarak teks dari tepi luar roda */
+    top: 35px; 
     transform: translateX(-50%);
     font-weight: bold;
     font-size: 16px;
@@ -59,25 +57,31 @@ body { background: var(--bg-dark); color: var(--text-white); display: flex; just
     text-align: center;
 }
 
-.btn-spin { width: 100%; padding: 16px; background: var(--primary); border: none; color: white; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.4); }
+.btn-spin { width: 100%; padding: 16px; background: var(--primary); border: none; color: white; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.4); transition: all 0.2s ease; }
 .btn-spin:hover { background: var(--primary-hover); }
 .btn-spin:disabled { background: #475569; cursor: not-allowed; box-shadow: none; }
 
-.result-display { margin-top: 15px; font-size: 18px; font-weight: bold; color: var(--success); text-align: center; min-height: 27px; }
+/* Desain minimalis text hasil pemenang tanpa emotikon */
+.result-display { margin-top: 20px; font-size: 18px; font-weight: 600; color: var(--success); text-align: center; min-height: 27px; letter-spacing: 0.5px; }
 
 .input-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.badge { background: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+.badge { background: var(--border); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-white); }
 .inputs-container { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding-right: 5px; }
 
 .item-row { display: flex; gap: 8px; }
-.item-row input { flex: 1; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: white; font-weight: 500; }
-.btn-del { padding: 0 12px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); border-radius: 8px; cursor: pointer; }
-.btn-del:hover { background: var(--danger); color: white; }
+.item-row input { flex: 1; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: white; font-weight: 500; outline: none; }
+.item-row input:focus { border-color: var(--primary); }
+
+/* Tombol hapus modern minimalis */
+.btn-del { padding: 0 14px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; }
+.btn-del:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
 
 .action-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
-.action-buttons button { flex: 1; padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; }
+.action-buttons button { flex: 1; padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; transition: all 0.2s ease; }
 .btn-secondary { background: var(--border); color: white; }
+.btn-secondary:hover { background: #475569; }
 .btn-primary { background: var(--success); color: white; }
+.btn-primary:hover { background: #059669; }
 
 .nav-setting { text-align: center; font-size: 13px; color: var(--text-muted); text-decoration: none; display: block; margin-top: auto; }
 .nav-setting:hover { color: var(--primary); text-decoration: underline; }
