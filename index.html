@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Roda Roulette Keberuntungan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="wheel-section">
+            <div class="mode-selector">
+                <button id="modeNormal" class="active" onclick="changeMode('normal')">Mode Normal</button>
+                <button id="modeEliminate" onclick="changeMode('elimination')">Mode Eliminasi</button>
+            </div>
+
+            <div class="wheel-box">
+                <div class="pointer"></div>
+                <div id="wheel" class="wheel"></div>
+            </div>
+
+            <button id="spinBtn" class="btn-spin" onclick="spinWheel()">PUTAR RODA</button>
+            <div id="resultText" class="result-display">Klik tombol di atas untuk memulai</div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-header">
+                <h3>📝 Entri Item</h3>
+                <span id="itemCount" class="badge">0 Item</span>
+            </div>
+            
+            <div id="item-inputs" class="inputs-container"></div>
+            
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="addItemRow('')">+ Tambah Baris</button>
+                <button class="btn-primary" onclick="saveItems()">Terapkan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
