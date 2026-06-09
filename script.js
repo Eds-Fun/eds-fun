@@ -1,6 +1,7 @@
 const BACKEND_URL = "https://eds-fun-eds-fun.hf.space"; 
 
 let currentRotation = 0;
+let isSpinning = false;
 let wheelConfig = { items: [], weights: [], locked: [], mode: "normal" };
 const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#6366f1"];
 
@@ -15,7 +16,6 @@ async function initWheel() {
         renderInputs();
     } catch (err) {
         console.error("Gagal sinkronisasi awal dengan backend:", err);
-        // Fallback aman jika backend tertidur / gagal merespons saat inisialisasi awal
         wheelConfig.items = ["1", "2", "3", "4", "5", "6"];
         wheelConfig.weights = [16.6, 16.6, 16.6, 16.6, 16.6, 17.0];
         wheelConfig.locked = [false, false, false, false, false, false];
@@ -32,6 +32,7 @@ function updateModeUI(currentMode) {
 }
 
 async function changeMode(mode) {
+    if (isSpinning) return; // Kunci proteksi putaran
     try {
         const res = await fetch(`${BACKEND_URL}/api/set-mode`, {
             method: 'POST',
@@ -61,14 +62,15 @@ function renderInputs() {
 }
 
 function addItemRow(val = "") {
+    if (isSpinning) return;
     const container = document.getElementById('item-inputs');
     if (!container) return;
     
     const div = document.createElement('div');
     div.className = 'item-row';
     div.innerHTML = `
-        <input type="text" value="${val}" class="item-val" placeholder="Ketik nama/angka...">
-        <button class="btn-del" onclick="this.parentElement.remove(); updateBadgeCount();">✕</button>
+        <input type="text" value="${val}" class="item-val" placeholder="Ketik nama/angka..." ${isSpinning ? 'disabled' : ''}>
+        <button class="btn-del" onclick="if(!isSpinning){this.parentElement.remove(); updateBadgeCount();}">✕</button>
     `;
     container.appendChild(div);
     updateBadgeCount();
@@ -81,6 +83,7 @@ function updateBadgeCount() {
 }
 
 async function saveItems() {
+    if (isSpinning) return;
     const inputs = document.querySelectorAll('.item-val');
     const newItems = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== "");
     
@@ -125,7 +128,8 @@ function renderWheel() {
         const textDiv = document.createElement('div');
         textDiv.className = 'wheel-text';
         textDiv.innerText = item;
-        textDiv.style.transform = `rotate(${angle + slice/2}deg)`;
+        // FIX: Perhitungan rotasi teks disinkronkan penuh dengan sumbu conic-gradient
+        textDiv.style.transform = `rotate(${angle + (slice / 2)}deg)`;
         wheel.appendChild(textDiv);
     });
 
@@ -136,20 +140,22 @@ function renderWheel() {
 }
 
 async function spinWheel() {
-    if (!wheelConfig.items || wheelConfig.items.length === 0) return;
+    if (isSpinning || !wheelConfig.items || wheelConfig.items.length === 0) return;
     
+    isSpinning = true;
     const btn = document.getElementById('spinBtn');
     if (btn) btn.disabled = true;
     
     const resultText = document.getElementById('resultText');
-    if (resultText) resultText.innerText = "Memutar...";
+    if (resultText) resultText.innerText = "⚡ Memutar Roda Keberuntungan...";
 
     try {
         const res = await fetch(`${BACKEND_URL}/api/spin`);
         const data = await res.json();
 
         const slice = 360 / wheelConfig.items.length;
-        const targetPos = (360 - (data.index * slice + slice/2)) % 360;
+        // Rumus presisi matematika komparasi busur derajat
+        const targetPos = (360 - (data.index * slice + slice / 2)) % 360;
         const currentMod = currentRotation % 360;
         
         let diff = targetPos - currentMod;
@@ -159,9 +165,8 @@ async function spinWheel() {
         document.getElementById('wheel').style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(async () => {
-            if (resultText) resultText.innerText = `Pemenang: Angka ${data.winner}!`;
-            if (btn) btn.disabled = false;
-
+            if (resultText) resultText.innerText = `🎉 Pemenang: Angka ${data.winner}!`;
+            
             if (data.mode === "elimination") {
                 const elimRes = await fetch(`${BACKEND_URL}/api/eliminate`, {
                     method: 'POST',
@@ -173,11 +178,20 @@ async function spinWheel() {
                     setTimeout(() => {
                         renderWheel();
                         renderInputs();
+                        isSpinning = false;
+                        if (btn) btn.disabled = false;
                     }, 1200);
+                } else {
+                    isSpinning = false;
+                    if (btn) btn.disabled = false;
                 }
+            } else {
+                isSpinning = false;
+                if (btn) btn.disabled = false;
             }
         }, 4000);
     } catch (err) {
+        isSpinning = false;
         if (btn) btn.disabled = false;
         console.error(err);
     }
