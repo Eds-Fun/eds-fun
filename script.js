@@ -68,9 +68,10 @@ function addItemRow(val = "") {
     
     const div = document.createElement('div');
     div.className = 'item-row';
+    // Menggunakan karakter Unicode minimalis biasa pengganti emotikon silang
     div.innerHTML = `
-        <input type="text" value="${val}" class="item-val" placeholder="Ketik nama/angka..." ${isSpinning ? 'disabled' : ''}>
-        <button class="btn-del" onclick="if(!isSpinning){this.parentElement.remove(); updateBadgeCount();}">✕</button>
+        <input type="text" value="${val}" class="item-val" placeholder="Nama item..." ${isSpinning ? 'disabled' : ''}>
+        <button class="btn-del" onclick="if(!isSpinning){this.parentElement.remove(); updateBadgeCount();}">Remove</button>
     `;
     container.appendChild(div);
     updateBadgeCount();
@@ -88,7 +89,7 @@ async function saveItems() {
     const newItems = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== "");
     
     if (newItems.length === 0) {
-        alert("Silakan masukkan minimal satu item!");
+        alert("Masukkan minimal satu item.");
         return;
     }
 
@@ -103,14 +104,12 @@ async function saveItems() {
             wheelConfig = await res.json();
             renderWheel();
             renderInputs();
-            alert("Roda berhasil diperbarui!");
         }
     } catch (err) {
-        alert("Gagal terhubung ke backend server.");
+        console.error("Gagal memperbarui item:", err);
     }
 }
 
-// FIX: Pengerjaan kalkulasi presisi rotasi teks juring ganjil/genap
 function renderWheel() {
     const wheel = document.getElementById('wheel');
     if (!wheel) return;
@@ -152,27 +151,25 @@ async function spinWheel() {
     if (btn) btn.disabled = true;
     
     const resultText = document.getElementById('resultText');
-    if (resultText) resultText.innerText = "⚡ Memutar Roda Keberuntungan...";
+    if (resultText) resultText.innerText = "Memutar roda...";
 
     try {
         const res = await fetch(`${BACKEND_URL}/api/spin`);
         const data = await res.json();
 
         const slice = 360 / wheelConfig.items.length;
-        
-        // Menghitung target posisi juring tepat di bawah jarum jam 12 (0 derajat)
         const targetPos = (360 - (data.index * slice + slice / 2)) % 360;
         const currentMod = currentRotation % 360;
         
         let diff = targetPos - currentMod;
         if (diff <= 0) diff += 360;
 
-        // Tambahkan putaran 5 kali putaran penuh (5 * 360) untuk efek dramatis
         currentRotation += diff + (360 * 5); 
         document.getElementById('wheel').style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(async () => {
-            if (resultText) resultText.innerText = `🎉 Pemenang: ${data.winner}!`;
+            // Teks pemenang dibersihkan dari dekorasi emotikon
+            if (resultText) resultText.innerText = `Pemenang: ${data.winner}`;
             
             if (data.mode === "elimination") {
                 const elimRes = await fetch(`${BACKEND_URL}/api/eliminate`, {
