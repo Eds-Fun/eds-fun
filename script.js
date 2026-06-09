@@ -32,7 +32,7 @@ function updateModeUI(currentMode) {
 }
 
 async function changeMode(mode) {
-    if (isSpinning) return; // Kunci proteksi putaran
+    if (isSpinning) return;
     try {
         const res = await fetch(`${BACKEND_URL}/api/set-mode`, {
             method: 'POST',
@@ -110,6 +110,7 @@ async function saveItems() {
     }
 }
 
+// FIX: Pengerjaan kalkulasi presisi rotasi teks juring ganjil/genap
 function renderWheel() {
     const wheel = document.getElementById('wheel');
     if (!wheel) return;
@@ -125,12 +126,16 @@ function renderWheel() {
     const slice = 360 / total;
     wheelConfig.items.forEach((item, i) => {
         const angle = i * slice;
-        const textDiv = document.createElement('div');
-        textDiv.className = 'wheel-text';
-        textDiv.innerText = item;
-        // FIX: Perhitungan rotasi teks disinkronkan penuh dengan sumbu conic-gradient
-        textDiv.style.transform = `rotate(${angle + (slice / 2)}deg)`;
-        wheel.appendChild(textDiv);
+        
+        const wrapperDiv = document.createElement('div');
+        wrapperDiv.className = 'wheel-text';
+        wrapperDiv.style.transform = `rotate(${angle + (slice / 2)}deg)`;
+        
+        const spanText = document.createElement('span');
+        spanText.innerText = item;
+        
+        wrapperDiv.appendChild(spanText);
+        wheel.appendChild(wrapperDiv);
     });
 
     const gradients = wheelConfig.items.map((_, i) => 
@@ -154,18 +159,20 @@ async function spinWheel() {
         const data = await res.json();
 
         const slice = 360 / wheelConfig.items.length;
-        // Rumus presisi matematika komparasi busur derajat
+        
+        // Menghitung target posisi juring tepat di bawah jarum jam 12 (0 derajat)
         const targetPos = (360 - (data.index * slice + slice / 2)) % 360;
         const currentMod = currentRotation % 360;
         
         let diff = targetPos - currentMod;
         if (diff <= 0) diff += 360;
 
+        // Tambahkan putaran 5 kali putaran penuh (5 * 360) untuk efek dramatis
         currentRotation += diff + (360 * 5); 
         document.getElementById('wheel').style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(async () => {
-            if (resultText) resultText.innerText = `🎉 Pemenang: Angka ${data.winner}!`;
+            if (resultText) resultText.innerText = `🎉 Pemenang: ${data.winner}!`;
             
             if (data.mode === "elimination") {
                 const elimRes = await fetch(`${BACKEND_URL}/api/eliminate`, {
