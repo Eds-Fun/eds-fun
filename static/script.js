@@ -16,10 +16,10 @@ async function initWheel() {
         renderInputs();
     } catch (err) {
         console.error("Gagal sinkronisasi awal dengan backend:", err);
-        // Jika gagal koneksi/kosong, buatkan fallback item lokal 1-6 agar user tetap bisa input angka
+        // FIX: Menggunakan huruf kecil 'false' agar JavaScript tidak error/macet
         wheelConfig.items = ["1", "2", "3", "4", "5", "6"];
         wheelConfig.weights = [16.6, 16.6, 16.6, 16.6, 16.6, 17.0];
-        wheelConfig.locked = [False, False, False, False, False, False];
+        wheelConfig.locked = [false, false, false, false, false, false];
         renderWheel();
         renderInputs();
     }
@@ -55,7 +55,6 @@ function renderInputs() {
     
     container.innerHTML = '';
     
-    // Jika data item dari server kosong, paksa munculkan minimal 1 input kosong agar bisa diketik
     if (!wheelConfig.items || wheelConfig.items.length === 0) {
         addItemRow("");
     } else {
@@ -87,10 +86,9 @@ function updateBadgeCount() {
     }
 }
 
-// KIRIM DATA DATA KE SERVER (Tombol Terapkan Perubahan)
+// KIRIM DATA KE SERVER (Tombol Terapkan Perubahan)
 async function saveItems() {
     const inputs = document.querySelectorAll('.item-val');
-    // Ambil semua teks yang diinput, hilangkan spasi kosong
     const newItems = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== "");
     
     if (newItems.length === 0) {
@@ -173,7 +171,7 @@ async function spinWheel() {
         let diff = targetPos - currentMod;
         if (diff <= 0) diff += 360;
 
-        currentRotation += diff + (360 * 5); // Berputar 5 kali putaran penuh sebelum berhenti
+        currentRotation += diff + (360 * 5); 
         const wheelEl = document.getElementById('wheel');
         if (wheelEl) wheelEl.style.transform = `rotate(${currentRotation}deg)`;
 
@@ -181,7 +179,6 @@ async function spinWheel() {
             if (resultText) resultText.innerText = `Angka ${data.winner}`;
             if (btn) btn.disabled = false;
 
-            // Logika Eksekusi Mode Eliminasi
             if (data.mode === "elimination") {
                 const elimRes = await fetch(`${BACKEND_URL}/api/eliminate`, {
                     method: 'POST',
