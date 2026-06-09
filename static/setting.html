@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Pengaturan Persentase</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; max-width: 550px; margin: 40px auto; padding: 20px; }
+        h2 { text-align: center; margin-bottom: 25px; font-weight: 700; color: #3b82f6; }
+        .row { display: flex; align-items: center; justify-content: space-between; background: #1e293b; padding: 16px; margin-bottom: 10px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .item-name { font-size: 16px; font-weight: 600; color: #cbd5e1; }
+        .controls { display: flex; align-items: center; gap: 12px; }
+        .w-input { width: 75px; padding: 8px; border-radius: 8px; border: 2px solid #334155; background: #0f172a; color: white; text-align: center; font-size: 15px; }
+        .w-input:focus { border-color: #3b82f6; outline: none; }
+        .lock-zone { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #94a3b8; cursor: pointer; font-weight: 500; }
+        .lock-zone input { width: 16px; height: 16px; accent-color: #3b82f6; }
+        button { width: 100%; padding: 14px; margin-top: 20px; background: #10b981; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #059669; }
+        .status-bar { text-align: right; margin-top: 12px; font-size: 13px; font-weight: 600; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h2>⚙️ Set Probabilitas</h2>
+    <div id="weight-list"></div>
+    <div class="status-bar" id="total-indicator">Total: 100%</div>
+    <button onclick="saveWeights()">Simpan Konfigurasi</button>
+
+    <script>
+        let config = {};
+        async function load() {
+            const res = await fetch('/api/config');
+            config = await res.json();
+            renderRows();
+        }
+        function renderRows() {
+            const list = document.getElementById('weight-list');
+            list.innerHTML = '';
+            config.items.forEach((item, i) => {
+                const isChecked = config.locked[i] ? 'checked' : '';
+                list.innerHTML += `
+                    <div class="row">
+                        <span class="item-name">Item ${item}</span>
+                        <div class="controls">
+                            <label class="lock-zone">
+                                <input type="checkbox" class="l-check" ${isChecked} onchange="toggleLock(${i})"> 🔒 Kunci
+                            </label>
+                            <input type="number" step="any" class="w-input" value="${config.weights[i]}" oninput="liveBalance(${i})">
+                            <span style="font-weight:600; color:#475569">%</span>
+                        </div>
+                    </div>`;
+            });
+            updateTotal();
+        }
+        function toggleLock(index) {
+            const checkboxes = document.querySelectorAll('.l-check');
+            config.locked[index] = checkboxes[index].checked;
+        }
+        function liveBalance(changedIndex) {
+            const rows = document.querySelectorAll('.row');
+            let weights = [];
+            let locked = [...config.locked];
+            if (changedIndex !== null) locked[changedIndex] = true;
+            rows.forEach(row => weights.push(parseFloat(row.querySelector('.w-input').value) || 0));
+            if (changedIndex !== null) config.weights[changedIndex] = weights[changedIndex];
+            let lockedSum = 0, unlockedCount = 0;
+            locked.forEach((l, idx) => { if (l) lockedSum += weights[idx]; else unlockedCount++; });
+            if (lockedSum <= 100 && unlockedCount > 0) {
+                let remaining = 100 - lockedSum;
+                let perUnlocked = Math.round((remaining / unlockedCount) * 100) / 100;
+                let unlockedSeen = 0;
+                rows.forEach((row, idx) => {
+                    if (!locked[idx]) {
+                        unlockedSeen++;
+                        const wInput = row.querySelector('.w-input');
+                        if (unlockedSeen === unlockedCount) {
+                            let currentSum = 0;
+                            rows.forEach((r, i) => { if (i !== idx) currentSum += parseFloat(r.querySelector('.w-input').value) || 0; });
+                            wInput.value = (100 - currentSum).toFixed(2);
+                        } else { wInput.value = perUnlocked.toFixed(2); }
+                        config.weights[idx] = parseFloat(wInput.value);
+                    }
+                });
+            }
+            updateTotal();
+        }
+        function updateTotal() {
+            const inputs = document.querySelectorAll('.w-input');
+            let sum = 0; inputs.forEach(i => sum += parseFloat(i.value) || 0);
+            document.getElementById('total-indicator').innerText = `Total Persentase: ${sum.toFixed(1)}%`;
+        }
+        async function saveWeights() {
+            const rows = document.querySelectorAll('.row');
+            config.weights = Array.from(rows).map(row => parseFloat(row.querySelector('.w-input').value) || 0);
+            config.locked = Array.from(rows).map(row => row.querySelector('.l-check').checked);
+            const res = await fetch('/api/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(config)
+            });
+            if(res.ok) load();
+        }
+        window.onload = load;
+    </script>
+</body>
+</html>
